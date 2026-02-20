@@ -1,14 +1,23 @@
 <!DOCTYPE html>
+<!--
+  今彩539 練習工具（手機版）V1‑2
+
+  這個版本是原先手機離線版（V1‑1）的改進版，調整了標題與本地儲存鍵值，
+  方便部署於 GitHub Pages 或其他靜態網站服務。主要修改如下：
+
+  * 將 HTML 文件名稱改為沒有空白的 `index_mobile_V1-2.html`，以便於部署後的網址
+    運作正常。含有空白的檔名在某些伺服器上會被編碼成 `%20`，容易造成連結錯誤。
+  * 更新文件標題 `<title>` 與頁面標題 `<h1>`，顯示目前版本為 V1‑2。
+  * 調整內部常數 `SAVE_KEY` 為 `lottery_data_mobile_v1_2`，避免與舊版資料衝突，
+    並確保資料儲存在新的鍵下。
+  * 其餘功能與 V1‑1 相同，仍然採用單檔案形式將 CSS 與 JavaScript 嵌入，方便
+    離線使用與部署至 GitHub。
+-->
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>今彩539 練習工具（手機離線版）</title>
-    <!--
-      手機離線版將所有 CSS 與 JavaScript 嵌入同一檔案中，
-      方便在沒有網路連線時於手機瀏覽器直接開啟使用。
-      此版本針對行動裝置優化按鈕大小與排版，避免點擊困難。
-    -->
+    <title>今彩539 練習工具（手機版 V1-2）</title>
     <style>
     /* 通用樣式 */
     body {
@@ -149,7 +158,7 @@
     </style>
 </head>
 <body>
-    <h1>今彩539 練習工具（手機離線版）</h1>
+    <h1>今彩539 練習工具（手機版 V1-2）</h1>
     <!-- 歷史資料與參數設定 -->
     <div class="section pane">
         <label for="historyFile">歷史資料檔案：</label>
@@ -199,7 +208,8 @@
     <script>
     /* 手機版腳本，功能與桌面版相同，但針對觸控與排版做了調整 */
     (function() {
-        const SAVE_KEY = 'lottery_data_mobile';
+        // 調整儲存鍵，避免舊版資料衝突
+        const SAVE_KEY = 'lottery_data_mobile_v1_2';
         const STRATEGY_COLORS = {
             "手動選號": "#e74c3c",
             "區間分散": "#2980b9",
