@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>今彩539 練習工具（手機離線版）</title>
+    <!--
+      手機離線版將所有 CSS 與 JavaScript 嵌入同一檔案中，
+      方便在沒有網路連線時於手機瀏覽器直接開啟使用。
+      此版本針對行動裝置優化按鈕大小與排版，避免點擊困難。
+    -->
+    <style>
+    /* 通用樣式 */
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        margin: 0;
+        padding: 10px;
+        background-color: #f7f7f7;
+        color: #333;
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 1.4em;
+    }
+    .section {
+        margin-bottom: 12px;
+    }
+    .status-text {
+        margin-left: 6px;
+        color: #0066cc;
+        font-size: 0.9em;
+    }
+    label {
+        font-size: 0.9em;
+    }
+    input[type="text"], input[type="number"], input[type="file"] {
+        padding: 4px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
+    }
+    input[type="file"] {
+        font-size: 0.9em;
+    }
+    select {
+        padding: 4px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
+    }
+    button {
+        margin: 4px 2px;
+        padding: 6px 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #0078d4;
+        color: #fff;
+        font-size: 1em;
+        cursor: pointer;
+    }
+    button:active {
+        background-color: #005a9e;
+    }
+    .pane {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 10px;
+    }
+    .group-header {
+        font-weight: bold;
+        margin-bottom: 4px;
+        margin-top: 6px;
+        font-size: 1em;
+    }
+    .count-label {
+        margin-top: 4px;
+        margin-bottom: 8px;
+        color: #555;
+        font-size: 0.9em;
+    }
+    .result-section {
+        margin-top: 8px;
+        margin-bottom: 8px;
+        font-size: 0.9em;
+        white-space: pre-wrap;
+    }
+    /* 回頂部按鈕樣式 */
+    .back-to-top {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        background-color: #0078d4;
+        color: #fff;
+        font-size: 0.9em;
+        z-index: 1000;
+        cursor: pointer;
+    }
+    .back-to-top:active {
+        background-color: #005a9e;
+    }
+    /* 號碼按鈕區域使用彈性容器包裝 */
+    .number-container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .number-button {
+        margin: 2px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f5f5f5;
+        text-align: center;
+        cursor: pointer;
+        /* 預設在桌面版下每行可放 10 個 */
+        flex: 0 0 calc(10% - 4px);
+        height: 36px;
+        line-height: 36px;
+        font-size: 0.9em;
+    }
+    .number-button.selected {
+        color: #fff;
+    }
+    /* 行動裝置樣式：更大的按鈕與較少的列 */
+    @media (max-width: 600px) {
+        h1 {
+            font-size: 1.2em;
+        }
+        .number-button {
+            flex: 0 0 calc(20% - 4px); /* 每行 5 個 */
+            height: 44px;
+            line-height: 44px;
+            font-size: 1em;
+        }
+        button {
+            padding: 8px 12px;
+            font-size: 1em;
+        }
+        .result-section {
+            font-size: 0.95em;
+        }
+    }
+    </style>
+</head>
+<body>
+    <h1>今彩539 練習工具（手機離線版）</h1>
+    <!-- 歷史資料與參數設定 -->
+    <div class="section pane">
+        <label for="historyFile">歷史資料檔案：</label>
+        <input type="file" id="historyFile" accept=".csv" />
+        <span id="historyPath" class="status-text">尚未選擇檔案</span>
+        <br>
+        <label for="historyRange">分析期數：</label>
+        <input type="number" id="historyRange" min="1" value="30" style="width:5em;" />
+        <button id="reloadHistory">重新載入歷史資料</button>
+        <br>
+        <span id="historyDate" class="status-text">尚未載入歷史資料</span>
+    </div>
+    <!-- 組數與語音設定 -->
+    <div class="section pane">
+        <label for="groupInput">組數：</label>
+        <input type="number" id="groupInput" min="1" value="1" style="width:4em;" />
+        <button id="setGroups">設定組數</button>
+        <br>
+        <label><input type="checkbox" id="speechEnable" checked />啟用語音</label>
+        <label for="speechRate">語速：</label>
+        <input type="range" id="speechRate" min="100" max="300" value="170" />
+    </div>
+    <!-- 智能選號 -->
+    <div class="section pane">
+        <label for="groupSelector">選擇組別：</label>
+        <select id="groupSelector"></select>
+        <label for="strategySelector">策略：</label>
+        <select id="strategySelector"></select>
+        <button id="applyStrategy">智能選號</button>
+    </div>
+    <!-- 主內容 -->
+    <div id="main-content"></div>
+    <!-- 結果與對獎 -->
+    <div class="section pane">
+        <div id="selectedLabel" class="result-section">已選號碼：</div>
+        <div id="usageLabel" class="result-section">號碼使用排行榜：尚未選號</div>
+        <button id="clearSelection">清除選號</button>
+        <button id="confirmSelection">確認選號</button>
+        <br><br>
+        <label for="resultEntry">輸入開獎號碼（空格分隔）：</label>
+        <input type="text" id="resultEntry" placeholder="例如：1 2 3 4 5" style="width:70%;" />
+        <button id="checkResults">對獎試算</button>
+        <div id="resultArea" class="result-section"></div>
+        <!-- 回頂部按鈕 -->
+        <button id="backToTop" class="back-to-top">回頂部</button>
+    </div>
+    <script>
+    /* 手機版腳本，功能與桌面版相同，但針對觸控與排版做了調整 */
+    (function() {
+        const SAVE_KEY = 'lottery_data_mobile';
+        const STRATEGY_COLORS = {
+            "手動選號": "#e74c3c",
+            "區間分散": "#2980b9",
+            "隨機選號": "#2c3e50",
+            "奇偶平衡": "#27ae60",
+            "熱號優先": "#e67e22",
+            "冷號補強": "#8e44ad",
+            "可能中5星": "#2c3e50",
+            "尾數分散": "#795548",
+            "避免連號": "#008080",
+            "歷史熱牌選號（n期）": "#d35400",
+            "歷史冷牌選號（n期）": "#34495e",
+            "歷史混合選號": "#16a085"
+        };
+
+        // 狀態變數
+        let selectedNumbers = [];
+        let strategyLabels = [];
+        let numGroups = 1;
+        let historyData = [];
+        let historyHot = [];
+        let historyCold = [];
+        let speechEnabled = true;
+        let speechRate = 170;
+        const buttonRefs = []; // [group][number]
+        const countLabels = [];
+
+        // DOM 元素
+        const historyFileInput = document.getElementById('historyFile');
+        const historyPathSpan = document.getElementById('historyPath');
+        const historyRangeInput = document.getElementById('historyRange');
+        const reloadHistoryButton = document.getElementById('reloadHistory');
+        const historyDateSpan = document.getElementById('historyDate');
+
+        const groupInput = document.getElementById('groupInput');
+        const setGroupsButton = document.getElementById('setGroups');
+        const speechEnableCheckbox = document.getElementById('speechEnable');
+        const speechRateSlider = document.getElementById('speechRate');
+
+        const groupSelector = document.getElementById('groupSelector');
+        const strategySelector = document.getElementById('strategySelector');
+        const applyStrategyButton = document.getElementById('applyStrategy');
+
+        const mainContent = document.getElementById('main-content');
+        const selectedLabelDiv = document.getElementById('selectedLabel');
+        const usageLabelDiv = document.getElementById('usageLabel');
+        const clearSelectionButton = document.getElementById('clearSelection');
+        const confirmSelectionButton = document.getElementById('confirmSelection');
+        const resultEntryInput = document.getElementById('resultEntry');
+        const checkResultsButton = document.getElementById('checkResults');
+        const resultAreaDiv = document.getElementById('resultArea');
+
+        // 初始化策略選單
+        for (const key of Object.keys(STRATEGY_COLORS)) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = key;
+            strategySelector.appendChild(option);
+        }
+        strategySelector.value = '區間分散';
+
+        // 綁定事件
+        historyFileInput.addEventListener('change', onHistoryFileChange);
+        // 綁定重新載入歷史資料與設定組數按鈕，支援點擊與觸控
+        bindButtonEvent(reloadHistoryButton, loadHistoryData);
+        bindButtonEvent(setGroupsButton, setNumGroups);
+        speechEnableCheckbox.addEventListener('change', () => {
+            speechEnabled = speechEnableCheckbox.checked;
+        });
+        speechRateSlider.addEventListener('input', () => {
+            speechRate = parseInt(speechRateSlider.value, 10);
+        });
+        // 若使用者修改組數輸入框，直接重新渲染組別
+        groupInput.addEventListener('change', () => {
+            setNumGroups();
+        });
+        // 在桌面與行動裝置上同時支援 click 與 touch 事件
+        function bindButtonEvent(button, handler) {
+            button.addEventListener('click', handler);
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handler();
+            });
+        }
+
+        bindButtonEvent(applyStrategyButton, smartSelectNumbers);
+        bindButtonEvent(clearSelectionButton, clearSelection);
+        bindButtonEvent(confirmSelectionButton, confirmSelection);
+        bindButtonEvent(checkResultsButton, checkResults);
+
+        // 當策略或組別選擇變更時，自動套用策略選號
+        strategySelector.addEventListener('change', () => {
+            smartSelectNumbers();
+        });
+        groupSelector.addEventListener('change', () => {
+            smartSelectNumbers();
+        });
+
+        // 回頂部按鈕顯示與點擊邏輯
+        const backToTopButton = document.getElementById('backToTop');
+        // 滾動時控制按鈕顯示
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            if (scrollTop > 200) {
+                backToTopButton.style.display = 'block';
+            } else {
+                backToTopButton.style.display = 'none';
+            }
+        });
+        // 綁定回頂部按鈕事件（支援點擊與觸控）
+        bindButtonEvent(backToTopButton, () => {
+            // 透過多種方式回到頁面頂部，兼容不同瀏覽器
+            if (document.documentElement) {
+                document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            if (document.body) {
+                document.body.scrollTop = 0;
+            }
+            // 同時調用 window.scrollTo 作為保險
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 解析 CSV
+        function parseCSV(text) {
+            const rows = [];
+            const lines = text.split(/\r?\n/);
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                const cols = line.split(',');
+                rows.push(cols.map(c => c.trim()));
+            }
+            return rows;
+        }
+
+        function onHistoryFileChange() {
+            const file = historyFileInput.files[0];
+            if (!file) return;
+            historyPathSpan.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                historyData = parseCSV(e.target.result);
+                loadHistoryData();
+            };
+            reader.onerror = () => {
+                historyDateSpan.textContent = '歷史資料讀取錯誤';
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function loadHistoryData() {
+            if (!historyData || historyData.length === 0) {
+                historyDateSpan.textContent = '尚未載入歷史資料';
+                return;
+            }
+            try {
+                const n = Math.min(parseInt(historyRangeInput.value, 10) || 0, historyData.length);
+                const recent = historyData.slice(-n);
+                const freq = {};
+                let lastDate = '未知';
+                recent.forEach(row => {
+                    if (row.length >= 6) {
+                        const nums = row.slice(1, 6).map(x => parseInt(x, 10)).filter(x => !isNaN(x));
+                        nums.forEach(num => {
+                            freq[num] = (freq[num] || 0) + 1;
+                        });
+                        lastDate = row[0];
+                    }
+                });
+                for (let i = 1; i <= 39; i++) {
+                    freq[i] = freq[i] || 0;
+                }
+                historyHot = Array.from({ length: 39 }, (_, i) => i + 1).sort((a, b) => freq[b] - freq[a]);
+                historyCold = Array.from({ length: 39 }, (_, i) => i + 1).sort((a, b) => freq[a] - freq[b]);
+                historyDateSpan.textContent = `歷史資料最新日期：${lastDate}（共${n}期）`;
+            } catch (err) {
+                historyDateSpan.textContent = '歷史資料讀取錯誤';
+            }
+        }
+
+        function setNumGroups() {
+            const num = parseInt(groupInput.value, 10);
+            if (!num || num < 1) {
+                alert('請輸入有效的組數');
+                return;
+            }
+            numGroups = num;
+            selectedNumbers = Array.from({ length: numGroups }, () => []);
+            strategyLabels = Array.from({ length: numGroups }, () => '');
+            renderNumberButtons();
+            updateGroupSelector();
+        }
+
+        function updateGroupSelector() {
+            groupSelector.innerHTML = '';
+            for (let i = 1; i <= numGroups; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `第 ${i} 組`;
+                groupSelector.appendChild(option);
+            }
+            if (numGroups > 0) {
+                groupSelector.value = '1';
+            }
+        }
+
+        function renderNumberButtons() {
+            mainContent.innerHTML = '';
+            buttonRefs.length = 0;
+            countLabels.length = 0;
+            for (let i = 0; i < numGroups; i++) {
+                // 每組容器
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'pane';
+                // 標題
+                const header = document.createElement('div');
+                header.className = 'group-header';
+                header.textContent = `第 ${i + 1} 組`;
+                groupDiv.appendChild(header);
+                // 按鈕容器
+                const container = document.createElement('div');
+                container.className = 'number-container';
+                buttonRefs[i] = [];
+                for (let n = 1; n <= 39; n++) {
+                    const btn = document.createElement('div');
+                    btn.className = 'number-button';
+                    btn.textContent = n;
+                    btn.addEventListener('click', () => toggleNumber(i, n));
+                    container.appendChild(btn);
+                    buttonRefs[i][n - 1] = btn;
+                }
+                groupDiv.appendChild(container);
+                const countLabel = document.createElement('div');
+                countLabel.className = 'count-label';
+                countLabel.textContent = '已選 0 顆號碼';
+                groupDiv.appendChild(countLabel);
+                countLabels.push(countLabel);
+                mainContent.appendChild(groupDiv);
+            }
+            updateSelectedLabel();
+        }
+
+        function toggleNumber(groupIndex, num) {
+            const group = selectedNumbers[groupIndex];
+            const idx = group.indexOf(num);
+            if (idx >= 0) {
+                group.splice(idx, 1);
+            } else {
+                if (group.length >= 16) return;
+                group.push(num);
+                if (speechEnabled) {
+                    speak(`${num} 號`);
+                }
+            }
+            strategyLabels[groupIndex] = '手動選號';
+            updateSelectedLabel();
+        }
+
+        function speak(text) {
+            if (!('speechSynthesis' in window)) return;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = Math.max(0.5, Math.min(3, speechRate / 100));
+            utterance.lang = 'zh-TW';
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function smartSelectNumbers() {
+            const idx = parseInt(groupSelector.value, 10) - 1;
+            if (isNaN(idx) || idx < 0 || idx >= numGroups) return;
+            loadHistoryData();
+            const strategy = strategySelector.value;
+            let selected = [];
+            if (strategy === '歷史熱牌選號（n期）') {
+                // 熱牌策略：取出最近歷史資料出現頻率最高的 10 個號碼
+                selected = historyHot.slice(0, 10);
+            } else if (strategy === '歷史冷牌選號（n期）') {
+                // 冷牌策略：取出最近歷史資料出現頻率最低的 10 個號碼
+                selected = historyCold.slice(0, 10);
+            } else if (strategy === '歷史混合選號') {
+                // 混合策略：從熱牌、冷牌與其他號碼中各自抽取一定數量
+                const hot = historyHot.slice(0, 10);
+                const cold = historyCold.slice(0, 10);
+                const others = [];
+                for (let i = 1; i <= 39; i++) {
+                    if (!hot.includes(i) && !cold.includes(i)) {
+                        others.push(i);
+                    }
+                }
+                selected = [];
+                // 注意：使用 concat 而不是展開運算子，避免某些瀏覽器相容性問題
+                selected = selected.concat(sample(hot, Math.min(4, hot.length)));
+                selected = selected.concat(sample(cold, Math.min(3, cold.length)));
+                selected = selected.concat(sample(others, Math.min(4, others.length)));
+            } else {
+                // 其他策略（包含區間分散、隨機選號等）視為全隨機抽取 10 個號碼
+                const all = Array.from({ length: 39 }, (_, i) => i + 1);
+                selected = sample(all, 10);
+            }
+            selectedNumbers[idx] = selected.slice().sort((a, b) => a - b);
+            strategyLabels[idx] = strategy;
+            updateSelectedLabel();
+        }
+
+        function sample(arr, k) {
+            const copy = arr.slice();
+            const res = [];
+            for (let i = 0; i < k && copy.length > 0; i++) {
+                const r = Math.floor(Math.random() * copy.length);
+                res.push(copy[r]);
+                copy.splice(r, 1);
+            }
+            return res;
+        }
+
+        function updateSelectedLabel() {
+            const lines = [];
+            const allNums = [];
+            for (let i = 0; i < numGroups; i++) {
+                const group = selectedNumbers[i];
+                const label = strategyLabels[i] || '';
+                lines.push(`第 ${i + 1} 組: ${group.join(', ')}${label ? '（' + label + '）' : ''}`);
+                countLabels[i].textContent = `已選 ${group.length} 顆號碼`;
+                allNums.push(...group);
+                // 更新按鈕樣式
+                for (let n = 1; n <= 39; n++) {
+                    const btn = buttonRefs[i][n - 1];
+                    if (group.includes(n)) {
+                        const color = STRATEGY_COLORS[label] || '#c0392b';
+                        btn.style.backgroundColor = color;
+                        btn.style.color = '#fff';
+                        btn.classList.add('selected');
+                    } else {
+                        btn.style.backgroundColor = '#f5f5f5';
+                        btn.style.color = '#000';
+                        btn.classList.remove('selected');
+                    }
+                }
+            }
+            selectedLabelDiv.textContent = lines.join('\n');
+            if (allNums.length === 0) {
+                usageLabelDiv.textContent = '號碼使用排行榜：尚未選號';
+            } else {
+                const counts = {};
+                allNums.forEach(n => { counts[n] = (counts[n] || 0) + 1; });
+                const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                const rankLines = [];
+                for (let i = 0; i < sorted.length; i += 10) {
+                    const segment = sorted.slice(i, i + 10).map(([num, c]) => `${num}(${c})`).join(', ');
+                    rankLines.push(segment);
+                }
+                usageLabelDiv.textContent = '號碼使用排行榜：\n' + rankLines.join('\n');
+            }
+        }
+
+        function clearSelection() {
+            selectedNumbers = Array.from({ length: numGroups }, () => []);
+            strategyLabels = Array.from({ length: numGroups }, () => '');
+            updateSelectedLabel();
+        }
+        function confirmSelection() {
+            for (const group of selectedNumbers) {
+                if (group.length < 5 || group.length > 16) {
+                    alert('每組請選擇 5 到 16 個號碼');
+                    return;
+                }
+            }
+            saveData();
+            alert('已確認所有選號');
+        }
+        function saveData() {
+            try {
+                const data = { numbers: selectedNumbers, strategies: strategyLabels };
+                localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+            } catch (err) {
+                // ignore
+            }
+        }
+        function loadData() {
+            try {
+                const str = localStorage.getItem(SAVE_KEY);
+                if (str) {
+                    const data = JSON.parse(str);
+                    selectedNumbers = data.numbers || [];
+                    strategyLabels = data.strategies || Array.from({ length: selectedNumbers.length }, () => '');
+                    numGroups = selectedNumbers.length || 1;
+                    groupInput.value = numGroups;
+                    renderNumberButtons();
+                    updateGroupSelector();
+                    return;
+                }
+            } catch (err) {}
+            // 初始化預設
+            numGroups = parseInt(groupInput.value, 10) || 1;
+            selectedNumbers = Array.from({ length: numGroups }, () => []);
+            strategyLabels = Array.from({ length: numGroups }, () => '');
+            renderNumberButtons();
+            updateGroupSelector();
+        }
+        function combination(n, k) {
+            if (k > n) return 0;
+            let result = 1;
+            for (let i = 1; i <= k; i++) {
+                result = result * (n - i + 1) / i;
+            }
+            return result;
+        }
+        function calculateBetCost(count) {
+            if (count < 5 || count > 16) return 0;
+            return combination(count, 5) * 50;
+        }
+        function calculatePrize(matched) {
+            switch (matched) {
+                case 5: return 8000000;
+                case 4: return 20000;
+                case 3: return 300;
+                case 2: return 50;
+                default: return 0;
+            }
+        }
+        function checkResults() {
+            const parts = resultEntryInput.value.trim().split(/\s+/).filter(x => x);
+            const nums = parts.map(x => parseInt(x, 10)).filter(x => !isNaN(x));
+            if (nums.length !== 5) {
+                alert('請輸入正確的 5 個號碼');
+                return;
+            }
+            const winning = new Set(nums);
+            const lines = [];
+            let totalCost = 0;
+            let totalPrize = 0;
+            for (let i = 0; i < numGroups; i++) {
+                const group = selectedNumbers[i];
+                const matchCount = group.filter(n => winning.has(n)).length;
+                const cost = calculateBetCost(group.length);
+                const prize = calculatePrize(matchCount);
+                lines.push(`第 ${i + 1} 組：中 ${matchCount} 顆星｜投注 ${cost} 元｜獲得 ${prize} 元`);
+                totalCost += cost;
+                totalPrize += prize;
+            }
+            lines.push('');
+            lines.push(`總投注金額：${totalCost} 元`);
+            lines.push(`總獎金：${totalPrize} 元`);
+            if (totalCost > 0) {
+                const roi = (totalPrize / totalCost) * 100;
+                lines.push(`報酬率：${roi.toFixed(2)}%`);
+            } else {
+                lines.push('報酬率：N/A');
+            }
+            alert(lines.join('\n'));
+            resultAreaDiv.textContent = lines.join('\n');
+        }
+        // 初始化
+        loadData();
+    })();
+    </script>
+</body>
+</html>
